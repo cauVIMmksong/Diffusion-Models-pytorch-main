@@ -101,23 +101,38 @@ class Diffusion:
     def sample(self, model, n):
         logging.info(f"Sampling {n} new images....")
         model.eval()
-        with torch.no_grad():
-            x = torch.randn((n, 3, self.img_size, self.img_size)).to(self.device)  # 수정된 부분
-            x = self.apply_pca_features(x)  # Apply PCA features to x0
-            for i in tqdm(reversed(range(1, self.noise_steps)), position=0):
-                t = (torch.ones(n) * i).long().to(self.device)
-                predicted_noise = model(x, t)
-                alpha = self.alpha[t][:, None, None, None]
-                alpha_hat = self.alpha_hat[t][:, None, None, None]
-                beta = self.beta[t][:, None, None, None]
-                if i > 1:
-                    noise = torch.randn_like(x)
-                else:
-                    noise = torch.zeros_like(x)
-                x = 1 / torch.sqrt(alpha) * (x - ((1 - alpha) / (torch.sqrt(1 - alpha_hat))) * predicted_noise) + torch.sqrt(beta) * noise
+        fake_img_dir = "results/FFHQ_fake_img"
+        os.makedirs(fake_img_dir, exist_ok=True)
+
+        result_images = []  # List to collect generated images
+
+        for idx in tqdm(range(n), position=0, leave=True):
+            with torch.no_grad():
+                x = torch.randn((1, 3, self.img_size, self.img_size)).to(self.device)
+                for i in reversed(range(1, self.noise_steps)):
+                    t = (torch.ones(1) * i).long().to(self.device)
+                    predicted_noise = model(x, t)
+                    alpha = self.alpha[t][:, None, None, None]
+                    alpha_hat = self.alpha_hat[t][:, None, None, None]
+                    beta = self.beta[t][:, None, None, None]
+                    if i > 1:
+                        noise = torch.randn_like(x)
+                    else:
+                        noise = torch.zeros_like(x)
+                    x = 1 / torch.sqrt(alpha) * (x - ((1 - alpha) / (torch.sqrt(1 - alpha_hat))) * predicted_noise) + torch.sqrt(beta) * noise
+
+                # Clamp the values
+                x = (x.clamp(-1, 1) + 1) / 2
+                result_images.append(x)
+
+                # Save each image individually to the directory
+                img_path = os.path.join(fake_img_dir, f"sample_{idx}.jpg")
+                save_image(x, img_path)
+                del x  # Explicitly delete the tensor to free up memory
+
         model.train()
-        x = x.clamp(0,1)
-        return x
+        return torch.cat(result_images, dim=0)
+
 
 def train(args):
     setup_logging(args.run_name)
@@ -192,17 +207,17 @@ def launch():
     args.dataset_path = r"datasets/FFHQ"
     args.device = "cuda"
     args.lr = 3e-4
-    model, diffusion = train(args)
+    #model, diffusion = train(args)
 
     # 모델 초기화 및 학습된 가중치 로드(학습시엔 전부 주석처리)
-    #model = UNet().to(args.device)
-    #ckpt = torch.load(os.path.join("models", args.run_name, "model_epoch_40.pt"))
-    #model.load_state_dict(ckpt)
+    model = UNet().to(args.device)
+    ckpt = torch.load(os.path.join("models", args.run_name, "ckpt.pt"))
+    model.load_state_dict(ckpt)
 
     # Diffusion 객체 초기화(학습시엔 전부 주석처리)
-    #dataloader = get_data(args)
-    #pca_features = extract_pca_features(dataloader.dataset)
-    #diffusion = Diffusion(pca_features=pca_features, img_size=args.image_size, device=args.device)
+    dataloader = get_data(args)
+    pca_features = extract_pca_features(dataloader.dataset)
+    diffusion = Diffusion(pca_features=pca_features, img_size=args.image_size, device=args.device)
  
     return model, diffusion, args
     
@@ -247,11 +262,11 @@ if __name__ == '__main__':
     sample_images(dataset_path, output_path, grid_size=4)
     
     device = "cuda"
-    #model = UNet().to(device)
-    ckpt = torch.load("models/PCA_DDPM_FFHQ/ckpt.pt")
+    model = UNet().to(device)
+    ckpt = torch.load("models/PCA_DDPM_FFHQ(v2)/ckpt.pt")
     model.load_state_dict(ckpt)
-    #diffusion = Diffusion(img_size=64, device=device)
-    x = diffusion.sample(model, 16)
+    diffusion = Diffusion(img_size=64, device=device)
+    x = diffusion.sample(model,7000)
     print(x.shape)
 
     x_grid = make_grid(x, nrow=4, pad_value=1)
