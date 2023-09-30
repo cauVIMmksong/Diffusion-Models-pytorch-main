@@ -1,5 +1,6 @@
 from torchvision.models import inception_v3
 from scipy.linalg import sqrtm
+from tqdm import tqdm
 
 
 # Inception 모델 로딩
@@ -8,7 +9,7 @@ inception_model.eval()
 
 def get_features(data_loader, model):
     all_features = []
-    for images, _ in data_loader:
+    for images, _ in tqdm(data_loader, desc="Extracting Features"):  # tqdm 추가
         with torch.no_grad():
             features = model(images.to(device))
         all_features.append(features.cpu().numpy())
@@ -48,9 +49,12 @@ fake_dataset = dset.ImageFolder(root = 'fake_image_CIFAR10', transform=transform
 fake_dataloader = torch.utils.data.DataLoader(fake_dataset, batch_size=batch_size, shuffle=True)
 
 # 실제 데이터와 생성된 데이터의 특징 벡터를 추출
+print("Extracting features from real data...")
 real_features = get_features(real_dataloader, inception_model)
+print("Extracting features from fake data...")
 fake_features = get_features(fake_dataloader, inception_model)
 
 # FID 계산
+print("Calculating FID...")
 fid_value = calculate_fid(real_features, fake_features)
 print("FID:", fid_value)
