@@ -1,7 +1,19 @@
+import os
+import random
+import torch
+import torch.nn as nn
+import torch.utils.data
+import torchvision.datasets as dset
+import torchvision.transforms as T
+import torchvision.utils as vutils
+import numpy as np
+import matplotlib.pyplot as plt
+
 from torchvision.models import inception_v3
 from scipy.linalg import sqrtm
 from tqdm import tqdm
 
+#%%
 
 # Inception 모델 로딩
 inception_model = inception_v3(pretrained=True, transform_input=False).to(device)
@@ -33,6 +45,8 @@ plt.axis("off")
 plt.title("Sample Images")
 plt.imshow(np.transpose(vutils.make_grid(sample_batch[0][:64], padding=2, normalize=True).cpu(),(1,2,0)))
 plt.show()
+
+#%%
 
 # 1. 실제 데이터셋에 대한 Dataloader 생성
 transform = T.Compose([
