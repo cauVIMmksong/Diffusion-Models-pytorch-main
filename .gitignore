@@ -9,3 +9,8 @@ results/*
 runs/*
 
 FFHQ_fake_img/*
+
+fake_CIFAR10_img/*
+
+cifar-10-batches-py/*
+cifar-10-python.tar.gz

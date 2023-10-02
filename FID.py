@@ -1,3 +1,5 @@
+#%%
+
 import os
 import random
 import torch
@@ -14,6 +16,11 @@ from scipy.linalg import sqrtm
 from tqdm import tqdm
 
 #%%
+ngpu = 1
+batch_size = 128
+
+device = torch.device("cuda:0" if (torch.cuda.is_available() and ngpu > 0) else "cpu")
+print(device,"is available!")
 
 # Inception 모델 로딩
 inception_model = inception_v3(pretrained=True, transform_input=False).to(device)
@@ -38,6 +45,20 @@ def calculate_fid(act1, act2):
     fid = ssdiff + np.trace(sigma1 + sigma2 - 2.0 * covmean)
     return fid
 
+# 1. 실제 데이터셋에 대한 Dataloader 생성
+transform = T.Compose([
+    T.Resize((299,299)),
+    T.ToTensor(),
+    T.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+])
+
+real_dataset = dset.ImageFolder(root='datasets/FFHQ', transform=transform)
+real_dataloader = torch.utils.data.DataLoader(real_dataset, batch_size=batch_size, shuffle=True)
+
+# 2. 가짜 데이터셋에 대한 Dataloader 생성
+fake_dataset = dset.ImageFolder(root = 'FFHQ_fake_img', transform=transform)
+fake_dataloader = torch.utils.data.DataLoader(fake_dataset, batch_size=batch_size, shuffle=True)
+
 # 몇 개의 샘플 이미지를 시각화합니다.
 sample_batch = next(iter(real_dataloader))
 plt.figure(figsize=(8,8))
@@ -47,20 +68,6 @@ plt.imshow(np.transpose(vutils.make_grid(sample_batch[0][:64], padding=2, normal
 plt.show()
 
 #%%
-
-# 1. 실제 데이터셋에 대한 Dataloader 생성
-transform = T.Compose([
-    T.Resize((299,299)),
-    T.ToTensor(),
-    T.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-])
-
-real_dataset = dset.CIFAR10(root='./data', train=True, transform=transform, download=True)
-real_dataloader = torch.utils.data.DataLoader(real_dataset, batch_size=batch_size, shuffle=True)
-
-# 2. 가짜 데이터셋에 대한 Dataloader 생성
-fake_dataset = dset.ImageFolder(root = 'fake_image_CIFAR10', transform=transform)
-fake_dataloader = torch.utils.data.DataLoader(fake_dataset, batch_size=batch_size, shuffle=True)
 
 # 실제 데이터와 생성된 데이터의 특징 벡터를 추출
 print("Extracting features from real data...")
