@@ -167,7 +167,40 @@ def launch():
     args.dataset_path = r"datasets/cifar10-32/train"
     args.device = "cuda"
     args.lr = 3e-4
-    train(args)
+#    train(args)
 
+# 기존 샘플링 코드
 if __name__ == '__main__':
     launch()
+
+    # args 객체 생성
+    class Args:
+        def __init__(self):
+            self.run_name = "PCA_DDPM_CIFAR10(v3)"
+            self.batch_size = 10
+            self.image_size = 64
+            self.num_classes = 10
+            self.dataset_path = r"datasets/cifar10-32/train"
+            self.device = "cuda"
+            self.lr = 3e-4
+
+    args = Args()  # args 객체 인스턴스화
+    
+    device = "cuda"
+    model = UNet_conditional(num_classes=10).to(device)
+    ckpt = torch.load("./models/PCA_DDPM_CIFAR10(v3)/ckpt_99.pt")
+    model.load_state_dict(ckpt)
+
+     # 아래 두 줄을 추가합니다.
+    dataloader = get_data(args)  # 데이터 로더 생성
+    pca_features_per_class = extract_pca_features_by_class(dataloader.dataset)  # PCA 특징 추출
+    
+    # pca_features_per_class 인자를 추가하여 Diffusion 객체를 생성합니다.
+    diffusion = Diffusion(pca_features_per_class=pca_features_per_class, img_size=64, device=device)
+
+    n = 16
+    y = torch.Tensor([6] * n).long().to(device)
+    x = diffusion.sample(model, n, y, cfg_scale=0)
+    plot_images(x)
+    # 이미지 저장
+    plt.savefig('results/PCA_DDPM_CIFAR10(v3)/sampled_images.png', bbox_inches='tight', pad_inches=0)

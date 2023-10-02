@@ -109,7 +109,7 @@ class Diffusion:
                 x = 1 / torch.sqrt(alpha) * (x - ((1 - alpha) / (torch.sqrt(1 - alpha_hat))) * predicted_noise) + torch.sqrt(beta) * noise
         model.train()
         x = (x.clamp(-1, 1) + 1) / 2
-        x = (x * 255).type(torch.uint8)
+        
         return x
 
 def train(args):
@@ -173,35 +173,32 @@ def launch():
     args.lr = 3e-4
     train(args)
 
-def generate_and_save_images_for_classes(model, pca_features_per_class, num_samples_per_class, save_dir, image_size=64, device="cuda"):
+def generate_and_save_images_for_classes(model, pca_features_per_class, num_samples, save_dir, image_size=64, device="cuda"):
     """
-    각 클래스에 대한 이미지를 생성하고 저장합니다.
+    무작위로 선택된 클래스에 대한 이미지를 생성하고 저장합니다.
     """
     os.makedirs(save_dir, exist_ok=True)
 
-    # CIFAR10의 클래스 이름을 가져옵니다.
-    dataset = CIFAR10(root="./", train=True, transform=ToTensor(), download=True)
-    classes = dataset.classes
+    save_dir = os.path.join(save_dir, "img")
+    os.makedirs(save_dir, exist_ok=True)
 
-    for class_idx, class_name in enumerate(classes):
-        logging.info(f"Generating images for class: {class_name}")
+    num_classes = 10
+    labels = torch.randint(0, num_classes, (num_samples,)).long().to(device)
+    
+    samples = []
+    for _ in tqdm(range(num_samples // 10)):  # 배치 크기가 10이므로
+        partial_labels = labels[_ * 10: (_ + 1) * 10]
+        partial_samples = diffusion.sample(model, 10, partial_labels)
+        samples.extend(partial_samples)
+    samples = torch.stack(samples)
 
-        class_dir = os.path.join(save_dir, class_name)
-        os.makedirs(class_dir, exist_ok=True)
-
-        partial_labels = torch.full((10,), class_idx).long().to(device)
-        samples = []
-        for _ in tqdm(range(num_samples_per_class // 10)):
-            partial_samples = diffusion.sample(model, 10, partial_labels)
-            samples.extend(partial_samples)
-        samples = torch.stack(samples)
-
-
-        for idx, image in enumerate(samples):
-            save_path = os.path.join(class_dir, f"sample_{idx}.jpg")
-            save_image(image, save_path)
+    for idx, image in enumerate(samples):
+        save_path = os.path.join(save_dir, f"sample_{idx}.jpg")
+        image = (image.float() / 255.0).clamp(0, 1)  # uint8에서 float로 변환하고 [0, 1] 범위로 정규화
+        save_image(image, save_path)
 
     logging.info(f"Saved images to {save_dir}")
+
 
 class Args:
     def __init__(self):
