@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 from tqdm import tqdm
 from torch import optim
+from torchvision.utils import save_image
 from utils import *
 from modules import UNet_conditional, EMA
 import logging
@@ -185,7 +186,7 @@ if __name__ == '__main__':
             self.lr = 3e-4
 
     args = Args()  # args 객체 인스턴스화
-    
+
     device = "cuda"
     model = UNet_conditional(num_classes=10).to(device)
     ckpt = torch.load("./models/PCA_DDPM_CIFAR10(v3)/ckpt_99.pt")
@@ -198,9 +199,23 @@ if __name__ == '__main__':
     # pca_features_per_class 인자를 추가하여 Diffusion 객체를 생성합니다.
     diffusion = Diffusion(pca_features_per_class=pca_features_per_class, img_size=64, device=device)
 
-    n = 16
+    """n = 16
     y = torch.Tensor([6] * n).long().to(device)
     x = diffusion.sample(model, n, y, cfg_scale=0)
     plot_images(x)
     # 이미지 저장
-    plt.savefig('results/PCA_DDPM_CIFAR10(v3)/sampled_images.png', bbox_inches='tight', pad_inches=0)
+    plt.savefig('results/PCA_DDPM_CIFAR10(v3)/sampled_images.png', bbox_inches='tight', pad_inches=0)"""
+
+    # fake_CIFAR10_img/img 디렉토리 생성 (해당 디렉토리가 없는 경우에만)
+    save_dir = 'fake_CIFAR10_img/img'
+    os.makedirs(save_dir, exist_ok=True)
+    
+    for i in tqdm(range(6000), desc="Generating and Saving Images"):
+        # 한 장씩 이미지를 샘플링
+        y = torch.randint(0, 10, (1,)).long().to(device)  # 0-9 사이의 레이블을 무작위로 선택
+        x = diffusion.sample(model, 1, y, cfg_scale=0)
+        x = (x.float() / 255.0).clamp(0, 1)
+        
+        # 이미지를 fake_CIFAR10_img/img 디렉토리에 저장
+        filename = os.path.join(save_dir, f"fake_image_{i}.png")
+        save_image(x[0], filename)
