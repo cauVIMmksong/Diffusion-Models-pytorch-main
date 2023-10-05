@@ -200,14 +200,14 @@ def launch():
     import argparse
     parser = argparse.ArgumentParser()
     args = parser.parse_args()
-    args.run_name = "PCA_DDPM_FFHQ(v2)"
-    args.epochs = 100
+    args.run_name = "PCA_DDPM_FFHQ(v3)"
+    args.epochs = 300
     args.batch_size = 8
     args.image_size = 64
     args.dataset_path = r"datasets/FFHQ"
     args.device = "cuda"
     args.lr = 3e-4
-    #model, diffusion = train(args)
+    model, diffusion = train(args)
 
     # 모델 초기화 및 학습된 가중치 로드(학습시엔 전부 주석처리)
     model = UNet().to(args.device)
