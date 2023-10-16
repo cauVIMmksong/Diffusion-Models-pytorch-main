@@ -101,7 +101,7 @@ class Diffusion:
     def sample(self, model, n):
         logging.info(f"Sampling {n} new images....")
         model.eval()
-        fake_img_dir = "results/FFHQ_fake_img"
+        fake_img_dir = "results/FFHQ_fake(2)_img"
         os.makedirs(fake_img_dir, exist_ok=True)
 
         result_images = []  # List to collect generated images
@@ -145,9 +145,20 @@ def train(args):
     diffusion = Diffusion(pca_features=pca_features, img_size=args.image_size, device=device)
     
     losses = []  # MSE losses for each epoch
+    # Checkpoint loading
+    start_epoch = 277  # Assuming you stopped at epoch 270
+    checkpoint_path = os.path.join("models", args.run_name, "model_epoch_270.pt")
+    if os.path.exists(checkpoint_path):
+        checkpoint = torch.load(checkpoint_path)
+        model.load_state_dict(checkpoint)
+        #optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+    else:
+        logging.error(f"No checkpoint found at {checkpoint_path}")
+        return
+    
     start_time = time.time()
 
-    for epoch in range(args.epochs):
+    for epoch in range(start_epoch, args.epochs):
         logging.info(f"Starting epoch {epoch}:")
         pbar = tqdm(dataloader)
         epoch_losses = []  # Store losses for this epoch
@@ -207,11 +218,11 @@ def launch():
     args.dataset_path = r"datasets/FFHQ"
     args.device = "cuda"
     args.lr = 3e-4
-    model, diffusion = train(args)
+    #model, diffusion = train(args)
 
     # 모델 초기화 및 학습된 가중치 로드(학습시엔 전부 주석처리)
     model = UNet().to(args.device)
-    ckpt = torch.load(os.path.join("models", args.run_name, "ckpt.pt"))
+    ckpt = torch.load(os.path.join("models", args.run_name, "model_epoch_290.pt"))
     model.load_state_dict(ckpt)
 
     # Diffusion 객체 초기화(학습시엔 전부 주석처리)
@@ -255,15 +266,15 @@ if __name__ == '__main__':
     # 학습 완료 후 샘플 이미지 생성 및 모델 저장
     sampled_images = diffusion.sample(model, n=args.batch_size)  # batch_size 대신 원하는 샘플 이미지의 개수를 지정할 수 있습니다.
     save_images(sampled_images, os.path.join("results", args.run_name, f"final_samples.jpg"))
-    torch.save(model.state_dict(), os.path.join("models", args.run_name, f"ckpt.pt"))    
+    torch.save(model.state_dict(), os.path.join("models", args.run_name, f"model_epoch_290.pt"))    
 
     dataset_path = 'datasets/FFHQ'
-    output_path = 'results/PCA_DDPM_FFHQ(v2)'
+    output_path = 'results/PCA_DDPM_FFHQ(v3)'
     sample_images(dataset_path, output_path, grid_size=4)
     
     device = "cuda"
     model = UNet().to(device)
-    ckpt = torch.load("models/PCA_DDPM_FFHQ(v2)/ckpt.pt")
+    ckpt = torch.load("models/PCA_DDPM_FFHQ(v3)/model_epoch_290.pt")
     model.load_state_dict(ckpt)
     diffusion = Diffusion(img_size=64, device=device)
     x = diffusion.sample(model,7000)
