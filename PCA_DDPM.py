@@ -101,7 +101,7 @@ class Diffusion:
     def sample(self, model, n):
         logging.info(f"Sampling {n} new images....")
         model.eval()
-        fake_img_dir = "results/FFHQ_fake(2)_img"
+        fake_img_dir = "results/FFHQ_fake(3)_img"
         os.makedirs(fake_img_dir, exist_ok=True)
 
         result_images = []  # List to collect generated images
@@ -146,8 +146,8 @@ def train(args):
     
     losses = []  # MSE losses for each epoch
     # Checkpoint loading
-    start_epoch = 277  # Assuming you stopped at epoch 270
-    checkpoint_path = os.path.join("models", args.run_name, "model_epoch_270.pt")
+    start_epoch = 291  # Assuming you stopped at epoch 270
+    checkpoint_path = os.path.join("models", args.run_name, "model_epoch_290.pt")
     if os.path.exists(checkpoint_path):
         checkpoint = torch.load(checkpoint_path)
         model.load_state_dict(checkpoint)
@@ -211,14 +211,14 @@ def launch():
     import argparse
     parser = argparse.ArgumentParser()
     args = parser.parse_args()
-    args.run_name = "PCA_DDPM_FFHQ(v3)"
-    args.epochs = 300
+    args.run_name = "PCA_DDPM_FFHQ(v4)"
+    args.epochs = 500
     args.batch_size = 8
     args.image_size = 64
-    args.dataset_path = r"datasets/FFHQ"
+    args.dataset_path = r"datasets/FFHQ2"
     args.device = "cuda"
     args.lr = 3e-4
-    #model, diffusion = train(args)
+    model, diffusion = train(args)
 
     # 모델 초기화 및 학습된 가중치 로드(학습시엔 전부 주석처리)
     model = UNet().to(args.device)
@@ -268,13 +268,13 @@ if __name__ == '__main__':
     save_images(sampled_images, os.path.join("results", args.run_name, f"final_samples.jpg"))
     torch.save(model.state_dict(), os.path.join("models", args.run_name, f"model_epoch_290.pt"))    
 
-    dataset_path = 'datasets/FFHQ'
-    output_path = 'results/PCA_DDPM_FFHQ(v3)'
+    dataset_path = 'datasets/FFHQ2'
+    output_path = 'results/PCA_DDPM_FFHQ(v4)'
     sample_images(dataset_path, output_path, grid_size=4)
     
     device = "cuda"
     model = UNet().to(device)
-    ckpt = torch.load("models/PCA_DDPM_FFHQ(v3)/model_epoch_290.pt")
+    ckpt = torch.load("models/PCA_DDPM_FFHQ(v4)/model_epoch_490.pt")
     model.load_state_dict(ckpt)
     diffusion = Diffusion(img_size=64, device=device)
     x = diffusion.sample(model,7000)
