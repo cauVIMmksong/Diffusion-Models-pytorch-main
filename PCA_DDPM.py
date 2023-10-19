@@ -211,18 +211,18 @@ def launch():
     import argparse
     parser = argparse.ArgumentParser()
     args = parser.parse_args()
-    args.run_name = "PCA_DDPM_FFHQ(v4)"
+    args.run_name = "PCA_DDPM_FFHQ(v3)"
     args.epochs = 500
     args.batch_size = 8
     args.image_size = 64
     args.dataset_path = r"datasets/FFHQ2"
     args.device = "cuda"
     args.lr = 3e-4
-    model, diffusion = train(args)
+    #model, diffusion = train(args)
 
     # 모델 초기화 및 학습된 가중치 로드(학습시엔 전부 주석처리)
     model = UNet().to(args.device)
-    ckpt = torch.load(os.path.join("models", args.run_name, "model_epoch_290.pt"))
+    ckpt = torch.load(os.path.join("models", args.run_name, "model_epoch_490.pt"))
     model.load_state_dict(ckpt)
 
     # Diffusion 객체 초기화(학습시엔 전부 주석처리)
@@ -266,7 +266,7 @@ if __name__ == '__main__':
     # 학습 완료 후 샘플 이미지 생성 및 모델 저장
     sampled_images = diffusion.sample(model, n=args.batch_size)  # batch_size 대신 원하는 샘플 이미지의 개수를 지정할 수 있습니다.
     save_images(sampled_images, os.path.join("results", args.run_name, f"final_samples.jpg"))
-    torch.save(model.state_dict(), os.path.join("models", args.run_name, f"model_epoch_290.pt"))    
+    torch.save(model.state_dict(), os.path.join("models", args.run_name, f"model_epoch_490.pt"))    
 
     dataset_path = 'datasets/FFHQ2'
     output_path = 'results/PCA_DDPM_FFHQ(v4)'
@@ -274,7 +274,7 @@ if __name__ == '__main__':
     
     device = "cuda"
     model = UNet().to(device)
-    ckpt = torch.load("models/PCA_DDPM_FFHQ(v4)/model_epoch_490.pt")
+    ckpt = torch.load("models/PCA_DDPM_FFHQ(v3)/model_epoch_490.pt")
     model.load_state_dict(ckpt)
     diffusion = Diffusion(img_size=64, device=device)
     x = diffusion.sample(model,7000)
