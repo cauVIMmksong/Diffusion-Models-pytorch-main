@@ -52,11 +52,11 @@ transform = T.Compose([
     T.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
 ])
 
-real_dataset = dset.ImageFolder(root='datasets/FFHQ', transform=transform)
+real_dataset = dset.ImageFolder(root='datasets/FFHQ2', transform=transform)
 real_dataloader = torch.utils.data.DataLoader(real_dataset, batch_size=batch_size, shuffle=True)
 
 # 2. 가짜 데이터셋에 대한 Dataloader 생성
-fake_dataset = dset.ImageFolder(root = 'FFHQ_fake_img', transform=transform)
+fake_dataset = dset.ImageFolder(root = 'results/FFHQ_fake_3_img', transform=transform)
 fake_dataloader = torch.utils.data.DataLoader(fake_dataset, batch_size=batch_size, shuffle=True)
 
 # 몇 개의 샘플 이미지를 시각화합니다.

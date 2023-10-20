@@ -155,13 +155,14 @@ class UNet(nn.Module):
             10000
             ** (torch.arange(0, channels, 2, device=self.device).float() / channels)
         )
-        pos_enc_a = torch.sin(t.repeat(1, channels // 2) * inv_freq)
-        pos_enc_b = torch.cos(t.repeat(1, channels // 2) * inv_freq)
+        pos_enc_a = torch.sin(t[:, None].repeat(1, channels // 2) * inv_freq)
+        pos_enc_b = torch.cos(t[:, None].repeat(1, channels // 2) * inv_freq)
+
         pos_enc = torch.cat([pos_enc_a, pos_enc_b], dim=-1)
         return pos_enc
 
     def forward(self, x, t):
-        t = t.unsqueeze(-1).type(torch.float)
+        t = t.squeeze(1).type(torch.float)  # [batch_size, 1] -> [batch_size]
         t = self.pos_encoding(t, self.time_dim)
 
         x1 = self.inc(x)
