@@ -5,6 +5,7 @@ from utils import get_data
 import argparse
 from sklearn.decomposition import PCA
 import numpy as np
+import matplotlib.pyplot as plt
 from tqdm import tqdm  # Import tqdm
 
 # Arguments
@@ -24,7 +25,7 @@ diff = Diffusion(device="cuda")
 image = next(iter(dataloader))[0]
 
 # Generate and save an initial noised image
-t = torch.Tensor([50, 100, 150, 200, 300, 600, 700, 999]).long()
+t = torch.Tensor([0, 50, 100, 150, 300, 600, 700, 999]).long()
 noised_image, _ = diff.noise_images(image, t)
 save_image(noised_image.add(1).mul(0.5), "noise2.jpg")
 
@@ -66,12 +67,13 @@ def visualize_pca_features(pca_features):
     plt.show()
 
 # Add principal component to noise at specified timesteps
-timesteps_to_modify = [100, 200, 600, 800, 999]
+timesteps_to_modify = [0, 100, 500, 800, 999]
 modified_noised_images = []
 
 principal_component = extract_principal_components(dataloader.dataset)
 principal_component = principal_component.to("cuda")
-visualize_pca_features(principal_component.numpy())
+visualize_pca_features(principal_component.cpu().numpy())
+
 
 for t_val in tqdm(timesteps_to_modify, desc="Modifying noise"):
     img, _ = diff.noise_images(image, torch.tensor([t_val]))
