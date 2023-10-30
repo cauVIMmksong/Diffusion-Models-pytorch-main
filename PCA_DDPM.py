@@ -146,8 +146,8 @@ def train(args):
     
     losses = []  # MSE losses for each epoch
     # Checkpoint loading
-    start_epoch = 491  # Assuming you stopped at epoch 270
-    checkpoint_path = os.path.join("models", args.run_name, "model_epoch_490.pt")
+    start_epoch = 971  # Assuming you stopped at epoch 270
+    checkpoint_path = os.path.join("models", args.run_name, "model_epoch_970.pt")
     if os.path.exists(checkpoint_path):
         checkpoint = torch.load(checkpoint_path)
         model.load_state_dict(checkpoint)
@@ -211,8 +211,8 @@ def launch():
     import argparse
     parser = argparse.ArgumentParser()
     args = parser.parse_args()
-    args.run_name = "PCA_DDPM_FFHQ(v4)"
-    args.epochs = 1000
+    args.run_name = "PCA_DDPM_FFHQ(v3)"
+    args.epochs = 1400
     args.batch_size = 8
     args.image_size = 64
     args.dataset_path = r"datasets/FFHQ2"
@@ -274,7 +274,7 @@ if __name__ == '__main__':
     
     device = "cuda"
     model = UNet().to(device)
-    ckpt = torch.load("models/PCA_DDPM_FFHQ(v3)/model_epoch_990.pt")
+    ckpt = torch.load("models/PCA_DDPM_FFHQ(v3)/model_epoch_970.pt")
     model.load_state_dict(ckpt)
     diffusion = Diffusion(img_size=64, device=device)
     x = diffusion.sample(model,7000)
