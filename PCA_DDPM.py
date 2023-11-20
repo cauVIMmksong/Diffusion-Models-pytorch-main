@@ -146,8 +146,8 @@ def train(args):
     
     losses = []  # MSE losses for each epoch
     # Checkpoint loading
-    start_epoch = 971  # Assuming you stopped at epoch 270
-    checkpoint_path = os.path.join("models", args.run_name, "model_epoch_970.pt")
+    start_epoch = 1391  # Assuming you stopped at epoch 270
+    checkpoint_path = os.path.join("models", args.run_name, "model_epoch_1390.pt")
     if os.path.exists(checkpoint_path):
         checkpoint = torch.load(checkpoint_path)
         model.load_state_dict(checkpoint)
@@ -212,7 +212,7 @@ def launch():
     parser = argparse.ArgumentParser()
     args = parser.parse_args()
     args.run_name = "PCA_DDPM_FFHQ(v3)"
-    args.epochs = 1400
+    args.epochs = 2000
     args.batch_size = 8
     args.image_size = 64
     args.dataset_path = r"datasets/FFHQ2"
@@ -222,7 +222,7 @@ def launch():
 
     # 모델 초기화 및 학습된 가중치 로드(학습시엔 전부 주석처리)
     model = UNet().to(args.device)
-    ckpt = torch.load(os.path.join("models", args.run_name, "model_epoch_490.pt"))
+    ckpt = torch.load(os.path.join("models", args.run_name, "model_epoch_1390.pt"))
     model.load_state_dict(ckpt)
 
     # Diffusion 객체 초기화(학습시엔 전부 주석처리)
@@ -266,7 +266,7 @@ if __name__ == '__main__':
     # 학습 완료 후 샘플 이미지 생성 및 모델 저장
     sampled_images = diffusion.sample(model, n=args.batch_size)  # batch_size 대신 원하는 샘플 이미지의 개수를 지정할 수 있습니다.
     save_images(sampled_images, os.path.join("results", args.run_name, f"final_samples.jpg"))
-    torch.save(model.state_dict(), os.path.join("models", args.run_name, f"model_epoch_490.pt"))    
+    torch.save(model.state_dict(), os.path.join("models", args.run_name, f"model_epoch_1390.pt"))    
 
     dataset_path = 'datasets/FFHQ2'
     output_path = 'results/PCA_DDPM_FFHQ(v4)'
@@ -274,7 +274,7 @@ if __name__ == '__main__':
     
     device = "cuda"
     model = UNet().to(device)
-    ckpt = torch.load("models/PCA_DDPM_FFHQ(v3)/model_epoch_970.pt")
+    ckpt = torch.load("models/PCA_DDPM_FFHQ(v3)/model_epoch_1390.pt")
     model.load_state_dict(ckpt)
     diffusion = Diffusion(img_size=64, device=device)
     x = diffusion.sample(model,7000)
